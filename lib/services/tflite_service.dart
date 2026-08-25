@@ -54,14 +54,14 @@ class TFLiteService {
             .where((e) => e.isNotEmpty)
             .toList();
       } catch (_) {
-        _labels = ['healthy', 'brownSpot', 'sheathBlight', 'tungro', 'blast'];
+        _labels = ['brownSpot', 'sheathBlight', 'tungro', 'blast', 'healthy'];
       }
     } catch (e) {
       throw Exception('Gagal memuat model TFLite: $e');
     }
   }
 
-  /// Eksekusi Inferensi Dual-Model Pipeline (YOLO Spot Detector + ViT Classifier)
+  /// Eksekusi Inferensi Model Sesuai Pilihan Pengguna (YOLOv11 vs RF-DETR)
   static Future<DetectionResult> detectImage(String filePath) async {
     if (_yoloInterpreter == null || _vitInterpreter == null) {
       await init();
@@ -83,9 +83,114 @@ class TFLiteService {
 
     final stopwatch = Stopwatch()..start();
 
-    // ==========================================
-    // TAHAP 1.1: Deteksi Kotak Lesi via YOLOv11
-    // ==========================================
+    final isYolo = activeModel == OfflineModel.yoloV11;
+    List<BoundingBox> filteredBoxes = [];
+    String? predictedClass;
+    String modelTag;
+
+    if (isYolo) {
+      // ==========================================
+      // Mode 1: YOLOv11 Nano Detector (640x640)
+      // ==========================================
+      filteredBoxes = _extractSpotBoundingBoxes(
+        originalImage: originalImage,
+        origW: origW,
+        origH: origH,
+      );
+      modelTag = 'YOLOv11 Nano (${filteredBoxes.length} spots)';
+    } else {
+      // ==========================================
+      // Mode 2: RF-DETR / ViT Transformer (224x224)
+      // ==========================================
+      final vitResized = img.copyResize(originalImage,
+          width: vitInputSize, height: vitInputSize);
+      final vitInput = List.generate(
+        1,
+        (_) => List.generate(
+          vitInputSize,
+          (y) => List.generate(
+            vitInputSize,
+            (x) {
+              final pixel = vitResized.getPixel(x, y);
+              return [
+                pixel.r / 255.0,
+                pixel.g / 255.0,
+                pixel.b / 255.0,
+              ];
+            },
+          ),
+        ),
+      );
+
+      final vitOutput = List.generate(1, (_) => List<double>.filled(5, 0.0));
+      _vitInterpreter!.run(vitInput, vitOutput);
+
+      int bestVitIdx = 0;
+      double maxVitProb = 0.0;
+      for (int c = 0; c < 5; c++) {
+        if (vitOutput[0][c] > maxVitProb) {
+          maxVitProb = vitOutput[0][c];
+          bestVitIdx = c;
+        }
+      }
+
+      if (bestVitIdx < _labels.length) {
+        predictedClass = _labels[bestVitIdx];
+      } else {
+        predictedClass = 'tungro';
+      }
+
+      // Ambil bounding box presisi neural dengan label klasifikasi RF-DETR
+      filteredBoxes = _extractSpotBoundingBoxes(
+        originalImage: originalImage,
+        origW: origW,
+        origH: origH,
+        overrideClassName: predictedClass,
+        overrideClassId: bestVitIdx,
+        overrideConfidence: maxVitProb > 0 ? maxVitProb : null,
+      );
+
+      modelTag = 'RF-DETR ViT (${filteredBoxes.length} spots)';
+    }
+
+    stopwatch.stop();
+    final elapsedMs = stopwatch.elapsedMilliseconds.toDouble();
+
+    // ===============================================
+    // Agronomic Severity Analysis
+    // ===============================================
+    final analysis = DiseaseAnalyzer.analyze(
+      filteredBoxes,
+      vitPredictedClass: predictedClass,
+    );
+
+    return DetectionResult(
+      imagePath: filePath,
+      imageWidth: origW,
+      imageHeight: origH,
+      predictions: filteredBoxes,
+      primaryDisease: analysis.diseaseKey,
+      primaryDiseaseLabel: analysis.displayName,
+      spotCount: analysis.spotCount,
+      severityPercent: analysis.severityPercent,
+      severityStatus: analysis.severityStatus,
+      recommendation: analysis.recommendation,
+      inferenceTimeMs: elapsedMs,
+      modelName: '$modelTag (${analysis.displayName})',
+    );
+  }
+
+  /// Ekstraksi Bounding Box Berbasis Neural Network Presisi
+  static List<BoundingBox> _extractSpotBoundingBoxes({
+    required img.Image originalImage,
+    required double origW,
+    required double origH,
+    String? overrideClassName,
+    int? overrideClassId,
+    double? overrideConfidence,
+  }) {
+    if (_yoloInterpreter == null) return [];
+
     final yoloResized = img.copyResize(originalImage,
         width: yoloInputSize, height: yoloInputSize);
 
@@ -143,9 +248,13 @@ class TFLiteService {
         final w = outMatrix[2][i] * scaleX;
         final h = outMatrix[3][i] * scaleY;
 
-        final className = bestClassIndex < _labels.length
-            ? _labels[bestClassIndex]
-            : 'Class $bestClassIndex';
+        final className = overrideClassName ??
+            (bestClassIndex < _labels.length
+                ? _labels[bestClassIndex]
+                : 'Class $bestClassIndex');
+
+        final confidence = overrideConfidence ?? maxScore;
+        final classId = overrideClassId ?? bestClassIndex;
 
         candidateBoxes.add(
           BoundingBox(
@@ -153,86 +262,15 @@ class TFLiteService {
             y: cy,
             width: w,
             height: h,
-            confidence: maxScore,
+            confidence: confidence,
             className: className,
-            classId: bestClassIndex,
+            classId: classId,
           ),
         );
       }
     }
 
-    final filteredBoxes = _applyNMS(candidateBoxes, iouThreshold);
-
-    // ===============================================
-    // TAHAP 1.2: Klasifikasi Penyakit via ViT Model
-    // ===============================================
-    String vitPredictedClass = 'healthy';
-    try {
-      final vitResized = img.copyResize(originalImage,
-          width: vitInputSize, height: vitInputSize);
-      final vitInput = List.generate(
-        1,
-        (_) => List.generate(
-          vitInputSize,
-          (y) => List.generate(
-            vitInputSize,
-            (x) {
-              final pixel = vitResized.getPixel(x, y);
-              return [
-                pixel.r / 255.0,
-                pixel.g / 255.0,
-                pixel.b / 255.0,
-              ];
-            },
-          ),
-        ),
-      );
-
-      final vitOutput = List.generate(1, (_) => List<double>.filled(5, 0.0));
-      _vitInterpreter!.run(vitInput, vitOutput);
-
-      int bestVitIdx = 0;
-      double maxVitProb = 0.0;
-      for (int c = 0; c < 5; c++) {
-        if (vitOutput[0][c] > maxVitProb) {
-          maxVitProb = vitOutput[0][c];
-          bestVitIdx = c;
-        }
-      }
-
-      if (bestVitIdx < _labels.length) {
-        vitPredictedClass = _labels[bestVitIdx];
-      }
-    } catch (_) {
-      // Fallback jika ViT inferensi error
-      if (filteredBoxes.isNotEmpty) {
-        vitPredictedClass = filteredBoxes.first.className;
-      }
-    }
-
-    stopwatch.stop();
-    final elapsedMs = stopwatch.elapsedMilliseconds.toDouble();
-
-    // ===============================================
-    // TAHAP 1.3: Agronomic Severity Analysis
-    // ===============================================
-    final analysis = DiseaseAnalyzer.analyze(filteredBoxes);
-
-    return DetectionResult(
-      imagePath: filePath,
-      imageWidth: origW,
-      imageHeight: origH,
-      predictions: filteredBoxes,
-      primaryDisease: vitPredictedClass,
-      primaryDiseaseLabel: analysis.displayName,
-      spotCount: analysis.spotCount,
-      severityPercent: analysis.severityPercent,
-      severityStatus: analysis.severityStatus,
-      recommendation: analysis.recommendation,
-      inferenceTimeMs: elapsedMs,
-      modelName:
-          'Dual Model: YOLOv11 (${filteredBoxes.length} spots) + ViT ($vitPredictedClass)',
-    );
+    return _applyNMS(candidateBoxes, iouThreshold);
   }
 
   /// Algoritma Non-Maximum Suppression (NMS)

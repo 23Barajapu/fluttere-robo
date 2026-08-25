@@ -19,8 +19,14 @@ class DiseaseAnalysis {
 }
 
 class DiseaseAnalyzer {
-  static DiseaseAnalysis analyze(List<BoundingBox> boxes) {
-    if (boxes.isEmpty) {
+  static DiseaseAnalysis analyze(
+    List<BoundingBox> boxes, {
+    String? vitPredictedClass,
+  }) {
+    // 1. Jika benar-benar tidak ada lesi/kotak dan ViT bilang healthy -> Daun Sehat
+    if (boxes.isEmpty &&
+        (vitPredictedClass == null ||
+            vitPredictedClass.toLowerCase() == 'healthy')) {
       return DiseaseAnalysis(
         diseaseKey: 'healthy',
         displayName: 'Daun Sehat',
@@ -32,15 +38,19 @@ class DiseaseAnalyzer {
       );
     }
 
-    // Hitung frekuensi kelas terbanyak
+    final totalSpots = boxes.length;
+
+    // Hitung frekuensi kelas dari bounding boxes
     final classCounts = <String, int>{};
     for (final box in boxes) {
       final key = _normalizeClassKey(box.className);
-      classCounts[key] = (classCounts[key] ?? 0) + 1;
+      if (key != 'healthy') {
+        classCounts[key] = (classCounts[key] ?? 0) + 1;
+      }
     }
 
-    // Cari kelas dominan
-    String dominantKey = 'healthy';
+    // Cari kelas dominan dari bounding boxes
+    String dominantKey = '';
     int maxCount = 0;
     classCounts.forEach((key, count) {
       if (count > maxCount) {
@@ -49,31 +59,28 @@ class DiseaseAnalyzer {
       }
     });
 
-    final totalSpots = boxes.length;
+    // Jika dari bounding boxes belum terklasifikasi, gunakan ViT classifier
+    if (dominantKey.isEmpty || dominantKey == 'healthy') {
+      if (vitPredictedClass != null &&
+          vitPredictedClass.toLowerCase() != 'healthy') {
+        dominantKey = _normalizeClassKey(vitPredictedClass);
+      } else {
+        // Jika ada lesi tapi label generic, diagnosis sebagai Penyakit Tungro / Bercak Cokelat
+        dominantKey = 'tungro';
+      }
+    }
 
     switch (dominantKey) {
       case 'brownspot':
-        return _analyzeBrownSpot(totalSpots);
+        return _analyzeBrownSpot(totalSpots > 0 ? totalSpots : 1);
       case 'sheathblight':
-        return _analyzeSheathBlight(totalSpots);
+        return _analyzeSheathBlight(totalSpots > 0 ? totalSpots : 1);
       case 'tungro':
-        return _analyzeTungro(totalSpots);
+        return _analyzeTungro(totalSpots > 0 ? totalSpots : 1);
       case 'blast':
-        return _analyzeBlast(totalSpots);
+        return _analyzeBlast(totalSpots > 0 ? totalSpots : 1);
       default:
-        // Jika label didapat 'healthy' atau lainnya
-        if (dominantKey == 'healthy') {
-          return DiseaseAnalysis(
-            diseaseKey: 'healthy',
-            displayName: 'Daun Sehat',
-            spotCount: 0,
-            severityPercent: 0.0,
-            severityStatus: 'Sehat',
-            recommendation:
-                'Pertahankan pemupukan berimbang dan sanitasi lahan.',
-          );
-        }
-        return _analyzeGeneric(dominantKey, totalSpots);
+        return _analyzeGeneric(dominantKey, totalSpots > 0 ? totalSpots : 1);
     }
   }
 

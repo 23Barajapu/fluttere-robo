@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../models/detection_result.dart';
 import '../models/survey_models.dart';
 import '../services/rule_engine_service.dart';
 import '../services/tflite_service.dart';
+import '../widgets/scanning_overlay.dart';
 import 'survey_result_screen.dart';
 
 class SurveyScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isProcessing = false;
   String _processingMessage = '';
+  String? _processingImagePath;
 
   late List<SurveyPointData> _points;
   int _expandedPointIndex = 0;
@@ -70,11 +73,17 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
       setState(() {
         _isProcessing = true;
+        _processingImagePath = file.path;
         _processingMessage =
             'Mendeteksi bercak ${strata.label} pada ${pt.id}...';
       });
 
-      final result = await TFLiteService.detectImage(file.path);
+      final resultFuture = TFLiteService.detectImage(file.path);
+      final results = await Future.wait([
+        resultFuture,
+        Future.delayed(const Duration(milliseconds: 1600)),
+      ]);
+      final result = results.first as DetectionResult;
 
       if (!mounted) return;
       setState(() {
@@ -335,41 +344,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
           ),
 
-          // Loading Overlay
+          // Animated Scanning Overlay
           if (_isProcessing)
-            Container(
-              color: Colors.black.withValues(alpha: 0.75),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 24,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF132A1C),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2D6A4F)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF52B788),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _processingMessage,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            ScanningOverlay(
+              message: _processingMessage,
+              imagePath: _processingImagePath,
+              subMessage: 'Pemeriksaan Strata Petak Sawah • AI On-Device',
             ),
         ],
       ),

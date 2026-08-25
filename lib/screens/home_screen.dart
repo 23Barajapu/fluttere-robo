@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../models/detection_result.dart';
 import '../services/tflite_service.dart';
+import '../widgets/scanning_overlay.dart';
 import 'result_screen.dart';
 import 'survey_screen.dart';
 
@@ -16,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   String _loadingMessage = '';
+  String? _scanningImagePath;
 
   @override
   void initState() {
@@ -36,11 +39,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _isLoading = true;
+        _scanningImagePath = pickedFile.path;
         _loadingMessage =
             'Menganalisis lesi daun via ${TFLiteService.activeModelName} (Edge AI Offline)...';
       });
 
-      final result = await TFLiteService.detectImage(pickedFile.path);
+      final resultFuture = TFLiteService.detectImage(pickedFile.path);
+      final results = await Future.wait([
+        resultFuture,
+        Future.delayed(const Duration(milliseconds: 1800)),
+      ]);
+      final result = results.first as DetectionResult;
 
       if (!mounted) return;
       setState(() {
@@ -124,51 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Banner Hibah BIMA 2026
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B3D2B),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2D6A4F)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.school_rounded,
-                        color: Color(0xFF52B788),
-                        size: 24,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hibah BIMA 2026 • Politeknik Negeri Subang',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              'Sistem Terintegrasi Diagnosis & Rekomendasi Presisi',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
                 // Primary Hero Card: Survei Petak 5 Titik (Main Mode)
                 InkWell(
                   onTap: () {
@@ -328,40 +292,43 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildModelChoiceCard(
-                              title: 'YOLOv11',
-                              subtitle: 'Nano • Float16 (640x640)',
-                              icon: Icons.flash_on_rounded,
-                              isSelected: TFLiteService.activeModel ==
-                                  OfflineModel.yoloV11,
-                              onTap: () {
-                                setState(() {
-                                  TFLiteService.activeModel =
-                                      OfflineModel.yoloV11;
-                                });
-                              },
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildModelChoiceCard(
+                                title: 'YOLOv11',
+                                subtitle: 'Nano • Float16',
+                                icon: Icons.flash_on_rounded,
+                                isSelected: TFLiteService.activeModel ==
+                                    OfflineModel.yoloV11,
+                                onTap: () {
+                                  setState(() {
+                                    TFLiteService.activeModel =
+                                        OfflineModel.yoloV11;
+                                  });
+                                },
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _buildModelChoiceCard(
-                              title: 'RF-DETR',
-                              subtitle: 'ViT • Transformer',
-                              icon: Icons.remove_red_eye_rounded,
-                              isSelected: TFLiteService.activeModel ==
-                                  OfflineModel.rfDetr,
-                              onTap: () {
-                                setState(() {
-                                  TFLiteService.activeModel =
-                                      OfflineModel.rfDetr;
-                                });
-                              },
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildModelChoiceCard(
+                                title: 'RF-DETR',
+                                subtitle: 'ViT • Transformer',
+                                icon: Icons.remove_red_eye_rounded,
+                                isSelected: TFLiteService.activeModel ==
+                                    OfflineModel.rfDetr,
+                                onTap: () {
+                                  setState(() {
+                                    TFLiteService.activeModel =
+                                        OfflineModel.rfDetr;
+                                  });
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -407,38 +374,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Loading Overlay
+          // Animated Scanning Overlay
           if (_isLoading)
-            Container(
-              color: Colors.black.withValues(alpha: 0.75),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 24),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF132A1C),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2D6A4F)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF52B788)),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _loadingMessage,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            ScanningOverlay(
+              message: _loadingMessage,
+              imagePath: _scanningImagePath,
+              subMessage: 'Inferensi On-Device Float16 • ${TFLiteService.activeModelName}',
             ),
         ],
       ),
@@ -481,16 +422,17 @@ class _HomeScreenState extends State<HomeScreen> {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF1B3D2B),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? const Color(0xFF52B788) : Colors.white12,
-            width: isSelected ? 2.0 : 1.0,
+            width: 1.5,
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -500,6 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -508,17 +451,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: 12.5,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: TextStyle(
                       color: isSelected
                           ? const Color(0xFFD8F3DC)
                           : Colors.white54,
-                      fontSize: 9,
+                      fontSize: 10,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
