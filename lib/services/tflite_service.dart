@@ -15,44 +15,39 @@ enum OfflineModel {
 
 class TFLiteService {
   static Interpreter? _yoloInterpreter;
-  static Interpreter? _rfdetrInterpreter;
+  static Interpreter? _vitInterpreter;
   static List<String> _labels = [];
   static OfflineModel activeModel = OfflineModel.yoloV11;
 
-  static const int inputSize = 640;
+  static const int yoloInputSize = 640;
+  static const int vitInputSize = 224;
   static const double confThreshold = 0.35;
   static const double iouThreshold = 0.45;
 
   static String get activeModelName =>
-      activeModel == OfflineModel.yoloV11 ? 'YOLOv11 Nano' : 'RF-DETR (ViT)';
+      activeModel == OfflineModel.yoloV11 ? 'YOLOv11 Nano' : 'ViT / RF-DETR';
 
-  /// Inisialisasi Interpreter TFLite lokal & muat labels
+  /// Inisialisasi Dual Model On-Device (YOLOv11 + Vision Transformer)
   static Future<void> init() async {
     try {
       final options = InterpreterOptions()..threads = 4;
 
-      // 1. Muat YOLOv11 TFLite
+      // 1. Muat YOLOv11 TFLite (Spot Detector)
       _yoloInterpreter ??= await Interpreter.fromAsset(
         'assets/models/yolov11.tflite',
         options: options,
       );
 
-      // 2. Coba muat RF-DETR jika ada file tflite-nya
-      if (_rfdetrInterpreter == null) {
-        try {
-          _rfdetrInterpreter = await Interpreter.fromAsset(
-            'assets/models/rfdetr.tflite',
-            options: options,
-          );
-        } catch (_) {
-          // Fallback ke YOLO jika rfdetr.tflite belum di-load
-          _rfdetrInterpreter = _yoloInterpreter;
-        }
-      }
+      // 2. Muat Vision Transformer / RF-DETR TFLite (Disease Classifier)
+      _vitInterpreter ??= await Interpreter.fromAsset(
+        'assets/models/vit.tflite',
+        options: options,
+      );
 
       // 3. Muat labels
       try {
-        final labelsData = await rootBundle.loadString('assets/models/labels.txt');
+        final labelsData =
+            await rootBundle.loadString('assets/models/labels.txt');
         _labels = labelsData
             .split('\n')
             .map((e) => e.trim())
@@ -66,9 +61,9 @@ class TFLiteService {
     }
   }
 
-  /// Eksekusi Inferensi Offline 100% pada citra
+  /// Eksekusi Inferensi Dual-Model Pipeline (YOLO Spot Detector + ViT Classifier)
   static Future<DetectionResult> detectImage(String filePath) async {
-    if (_yoloInterpreter == null) {
+    if (_yoloInterpreter == null || _vitInterpreter == null) {
       await init();
     }
 
@@ -88,18 +83,20 @@ class TFLiteService {
 
     final stopwatch = Stopwatch()..start();
 
-    // 1. Preprocessing citra: Resize ke 640x640 dan normalisasi [0..1]
-    final resized = img.copyResize(originalImage, width: inputSize, height: inputSize);
+    // ==========================================
+    // TAHAP 1.1: Deteksi Kotak Lesi via YOLOv11
+    // ==========================================
+    final yoloResized = img.copyResize(originalImage,
+        width: yoloInputSize, height: yoloInputSize);
 
-    // Input buffer [1, 640, 640, 3] Float32
-    final input = List.generate(
+    final yoloInput = List.generate(
       1,
       (_) => List.generate(
-        inputSize,
+        yoloInputSize,
         (y) => List.generate(
-          inputSize,
+          yoloInputSize,
           (x) {
-            final pixel = resized.getPixel(x, y);
+            final pixel = yoloResized.getPixel(x, y);
             return [
               pixel.r / 255.0,
               pixel.g / 255.0,
@@ -110,10 +107,9 @@ class TFLiteService {
       ),
     );
 
-    // 2. Output buffer [1, 9, 8400]
     final numClasses = _labels.isNotEmpty ? _labels.length : 5;
     final outputChannels = 4 + numClasses; // 9
-    final output = List.generate(
+    final yoloOutput = List.generate(
       1,
       (_) => List.generate(
         outputChannels,
@@ -121,19 +117,13 @@ class TFLiteService {
       ),
     );
 
-    // 3. Eksekusi Interpreter sesuai model aktif
-    final interpreter = (activeModel == OfflineModel.rfDetr && _rfdetrInterpreter != null)
-        ? _rfdetrInterpreter!
-        : _yoloInterpreter!;
+    _yoloInterpreter!.run(yoloInput, yoloOutput);
 
-    interpreter.run(input, output);
-
-    // 4. Parsing Bounding Box & Class Scores
+    // Parsing YOLO output
     final candidateBoxes = <BoundingBox>[];
-    final outMatrix = output[0]; // [9, 8400]
-
-    final scaleX = origW / inputSize;
-    final scaleY = origH / inputSize;
+    final outMatrix = yoloOutput[0];
+    final scaleX = origW / yoloInputSize;
+    final scaleY = origH / yoloInputSize;
 
     for (int i = 0; i < 8400; i++) {
       double maxScore = 0.0;
@@ -171,13 +161,61 @@ class TFLiteService {
       }
     }
 
-    // 5. Non-Maximum Suppression (NMS)
     final filteredBoxes = _applyNMS(candidateBoxes, iouThreshold);
+
+    // ===============================================
+    // TAHAP 1.2: Klasifikasi Penyakit via ViT Model
+    // ===============================================
+    String vitPredictedClass = 'healthy';
+    try {
+      final vitResized = img.copyResize(originalImage,
+          width: vitInputSize, height: vitInputSize);
+      final vitInput = List.generate(
+        1,
+        (_) => List.generate(
+          vitInputSize,
+          (y) => List.generate(
+            vitInputSize,
+            (x) {
+              final pixel = vitResized.getPixel(x, y);
+              return [
+                pixel.r / 255.0,
+                pixel.g / 255.0,
+                pixel.b / 255.0,
+              ];
+            },
+          ),
+        ),
+      );
+
+      final vitOutput = List.generate(1, (_) => List<double>.filled(5, 0.0));
+      _vitInterpreter!.run(vitInput, vitOutput);
+
+      int bestVitIdx = 0;
+      double maxVitProb = 0.0;
+      for (int c = 0; c < 5; c++) {
+        if (vitOutput[0][c] > maxVitProb) {
+          maxVitProb = vitOutput[0][c];
+          bestVitIdx = c;
+        }
+      }
+
+      if (bestVitIdx < _labels.length) {
+        vitPredictedClass = _labels[bestVitIdx];
+      }
+    } catch (_) {
+      // Fallback jika ViT inferensi error
+      if (filteredBoxes.isNotEmpty) {
+        vitPredictedClass = filteredBoxes.first.className;
+      }
+    }
 
     stopwatch.stop();
     final elapsedMs = stopwatch.elapsedMilliseconds.toDouble();
 
-    // 6. Agronomic Severity & Threshold Analyzer
+    // ===============================================
+    // TAHAP 1.3: Agronomic Severity Analysis
+    // ===============================================
     final analysis = DiseaseAnalyzer.analyze(filteredBoxes);
 
     return DetectionResult(
@@ -185,19 +223,21 @@ class TFLiteService {
       imageWidth: origW,
       imageHeight: origH,
       predictions: filteredBoxes,
-      primaryDisease: analysis.diseaseKey,
+      primaryDisease: vitPredictedClass,
       primaryDiseaseLabel: analysis.displayName,
       spotCount: analysis.spotCount,
       severityPercent: analysis.severityPercent,
       severityStatus: analysis.severityStatus,
       recommendation: analysis.recommendation,
       inferenceTimeMs: elapsedMs,
-      modelName: '$activeModelName (Offline)',
+      modelName:
+          'Dual Model: YOLOv11 (${filteredBoxes.length} spots) + ViT ($vitPredictedClass)',
     );
   }
 
   /// Algoritma Non-Maximum Suppression (NMS)
-  static List<BoundingBox> _applyNMS(List<BoundingBox> boxes, double threshold) {
+  static List<BoundingBox> _applyNMS(
+      List<BoundingBox> boxes, double threshold) {
     if (boxes.isEmpty) return [];
 
     boxes.sort((a, b) => b.confidence.compareTo(a.confidence));

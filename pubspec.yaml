@@ -66,6 +66,8 @@ flutter:
     - assets/config/config.json
     - assets/models/
     - assets/models/yolov11.tflite
+    - assets/models/vit.tflite
+    - assets/models/rfdetr.tflite
     - assets/models/labels.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
