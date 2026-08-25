@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/tflite_service.dart';
 import 'result_screen.dart';
+import 'survey_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _processImage(ImageSource source) async {
+  Future<void> _processQuickScan(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
@@ -71,12 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(Icons.error_outline, color: Color(0xFFE53935)),
             SizedBox(width: 8),
-            Text('Gagal Menganalisis', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text('Gagal Menganalisis',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
           ],
         ),
         content: Text(
           error,
-          style: const TextStyle(color: Color(0xFFD8F3DC), fontSize: 13, height: 1.4),
+          style: const TextStyle(
+              color: Color(0xFFD8F3DC), fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -103,7 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Color(0xFF1B4332),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.eco_rounded, color: Color(0xFF52B788), size: 20),
+              child: const Icon(Icons.eco_rounded,
+                  color: Color(0xFF52B788), size: 20),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -120,39 +124,40 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Status Bar Offline Engine
+                // Banner Hibah BIMA 2026
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1B3D2B),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF2D6A4F)),
                   ),
-                  child: Row(
+                  child: const Row(
                     children: [
-                      const Icon(
-                        Icons.offline_bolt_rounded,
+                      Icon(
+                        Icons.school_rounded,
                         color: Color(0xFF52B788),
                         size: 24,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Aktif: ${TFLiteService.activeModelName} (100% Offline)',
-                              style: const TextStyle(
+                              'Hibah BIMA 2026 • Politeknik Negeri Subang',
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 12,
                               ),
                             ),
-                            const Text(
-                              'Inferensi lokal di memori HP tanpa koneksi server',
+                            Text(
+                              'Sistem Terintegrasi Diagnosis & Rekomendasi Presisi',
                               style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 11,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -164,23 +169,156 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 20),
 
-                // Model Switcher Selector
+                // Primary Hero Card: Survei Petak 5 Titik (Main Mode)
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SurveyScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF2D6A4F), Color(0xFF1B4332)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2D6A4F).withValues(alpha: 0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: const Color(0xFF52B788),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF52B788),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'METODE UTAMA',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Survei Petak Sawah (Pola X 5 Titik)',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Ambil sampel 5 titik rumpun x 3 strata daun untuk mendapatkan status ambang ekonomi petak (Level 0-4) dan rekomendasi PHT resmi.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFD8F3DC),
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            _buildFeatureBadge(
+                                Icons.grid_view_rounded, 'Pola Diagonal X'),
+                            const SizedBox(width: 8),
+                            _buildFeatureBadge(
+                                Icons.calculate_outlined, 'Pure Rule Engine'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Secondary Mode: Quick Leaf Scan
+                const Text(
+                  'Mode Pemeriksaan Cepat',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFB7E4C7),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionCard(
+                        icon: Icons.camera_alt_rounded,
+                        title: 'Kamera Cepat',
+                        subtitle: 'Scan 1 helai daun',
+                        color: const Color(0xFF1B3D2B),
+                        onTap: () => _processQuickScan(ImageSource.camera),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionCard(
+                        icon: Icons.photo_library_rounded,
+                        title: 'Galeri Cepat',
+                        subtitle: 'Pilih 1 foto daun',
+                        color: const Color(0xFF132A1C),
+                        onTap: () => _processQuickScan(ImageSource.gallery),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Model AI Engine Status & Selector
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFF132A1C),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2D6A4F).withValues(alpha: 0.5)),
+                    border: Border.all(color: Colors.white12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.tune_rounded, color: Color(0xFF52B788), size: 16),
-                          SizedBox(width: 6),
+                          Icon(Icons.tune_rounded,
+                              color: Color(0xFF52B788), size: 16),
+                          SizedBox(width: 8),
                           Text(
-                            'Pilih Arsitektur Model AI (On-Device)',
+                            'Arsitektur Model AI (100% On-Device)',
                             style: TextStyle(
                               color: Color(0xFFB7E4C7),
                               fontWeight: FontWeight.bold,
@@ -197,10 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               title: 'YOLOv11',
                               subtitle: 'Nano • Float16 (640x640)',
                               icon: Icons.flash_on_rounded,
-                              isSelected: TFLiteService.activeModel == OfflineModel.yoloV11,
+                              isSelected: TFLiteService.activeModel ==
+                                  OfflineModel.yoloV11,
                               onTap: () {
                                 setState(() {
-                                  TFLiteService.activeModel = OfflineModel.yoloV11;
+                                  TFLiteService.activeModel =
+                                      OfflineModel.yoloV11;
                                 });
                               },
                             ),
@@ -211,10 +351,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               title: 'RF-DETR',
                               subtitle: 'ViT • Transformer',
                               icon: Icons.remove_red_eye_rounded,
-                              isSelected: TFLiteService.activeModel == OfflineModel.rfDetr,
+                              isSelected: TFLiteService.activeModel ==
+                                  OfflineModel.rfDetr,
                               onTap: () {
                                 setState(() {
-                                  TFLiteService.activeModel = OfflineModel.rfDetr;
+                                  TFLiteService.activeModel =
+                                      OfflineModel.rfDetr;
                                 });
                               },
                             ),
@@ -225,91 +367,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
-
-                // Hero Banner
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B4332), Color(0xFF2D6A4F)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2D6A4F).withValues(alpha: 0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Diagnosa Penyakit Daun Padi Langsung di Sawah',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Menggunakan model ${TFLiteService.activeModelName} untuk mendeteksi lesi bercak secara offline, menghitung keparahan, serta rekomendasi penanganan.',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFFD8F3DC),
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
                 const SizedBox(height: 24),
 
-                const Text(
-                  'Mulai Analisis',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFB7E4C7),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
-                        icon: Icons.camera_alt_rounded,
-                        title: 'Kamera',
-                        subtitle: 'Ambil foto daun langsung',
-                        color: const Color(0xFF2D6A4F),
-                        onTap: () => _processImage(ImageSource.camera),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: _buildActionCard(
-                        icon: Icons.photo_library_rounded,
-                        title: 'Galeri',
-                        subtitle: 'Pilih foto dari galeri',
-                        color: const Color(0xFF1B4332),
-                        onTap: () => _processImage(ImageSource.gallery),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Penyakit yang Didukung Card
+                // Daftar Penyakit
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
@@ -320,24 +380,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Kategori Penyakit Terdeteksi',
+                        'Kategori Penyakit yang Dikenali',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildDiseaseItem('Bercak Cokelat', 'Brown Spot', const Color(0xFFE65100)),
-                      const Divider(color: Colors.white10, height: 16),
-                      _buildDiseaseItem('Hawar Pelepah', 'Sheath Blight', const Color(0xFFF57F17)),
-                      const Divider(color: Colors.white10, height: 16),
-                      _buildDiseaseItem('Penyakit Tungro', 'Tungro Virus', const Color(0xFFD50000)),
-                      const Divider(color: Colors.white10, height: 16),
-                      _buildDiseaseItem('Penyakit Blas', 'Pyricularia oryzae', const Color(0xFFC2185B)),
+                      _buildDiseaseItem('Bercak Cokelat', 'Brown Spot',
+                          const Color(0xFFE65100)),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDiseaseItem('Hawar Pelepah', 'Sheath Blight',
+                          const Color(0xFFF57F17)),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDiseaseItem('Penyakit Tungro', 'Tungro Virus',
+                          const Color(0xFFD50000)),
+                      const Divider(color: Colors.white10, height: 14),
+                      _buildDiseaseItem('Penyakit Blas', 'Pyricularia oryzae',
+                          const Color(0xFFC2185B)),
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -348,7 +413,8 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.black.withValues(alpha: 0.75),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28, vertical: 24),
                   decoration: BoxDecoration(
                     color: const Color(0xFF132A1C),
                     borderRadius: BorderRadius.circular(16),
@@ -358,16 +424,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF52B788)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF52B788)),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                       Text(
                         _loadingMessage,
-                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -375,6 +440,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureBadge(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black38,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF95D5B2)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFD8F3DC),
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );
@@ -392,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF1B3D2B),
           borderRadius: BorderRadius.circular(12),
@@ -406,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               icon,
               color: isSelected ? const Color(0xFF95D5B2) : Colors.white60,
-              size: 22,
+              size: 20,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -417,22 +506,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     title,
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: 13,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFFD8F3DC) : Colors.white54,
-                      fontSize: 10,
+                      color: isSelected
+                          ? const Color(0xFFD8F3DC)
+                          : Colors.white54,
+                      fontSize: 9,
                     ),
                   ),
                 ],
               ),
             ),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: Color(0xFF52B788), size: 16),
           ],
         ),
       ),
@@ -450,7 +540,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
@@ -460,20 +550,20 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.black26,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.white, size: 28),
+              child: Icon(icon, color: Colors.white, size: 24),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               title,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 14,
               ),
             ),
             const SizedBox(height: 4),
@@ -502,12 +592,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Text(
             name,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
         Text(
           latin,
-          style: const TextStyle(color: Colors.white54, fontSize: 11, fontStyle: FontStyle.italic),
+          style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 11,
+              fontStyle: FontStyle.italic),
         ),
       ],
     );

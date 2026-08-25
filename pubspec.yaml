@@ -62,6 +62,8 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/config/
+    - assets/config/config.json
     - assets/models/
     - assets/models/yolov11.tflite
     - assets/models/labels.txt

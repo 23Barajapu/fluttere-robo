@@ -1,0 +1,68 @@
+{
+  "versi_ambang": "1.0",
+  "tanggal_validasi": null,
+  "validator": null,
+  "status": "sebagian belum divalidasi ahli",
+  "ambang": {
+    "nb_padat": 20,
+    "nt_ringan_min": 1,
+    "nt_berat": 10,
+    "na_min": 1,
+    "titik_minimum": 2,
+    "jumlah_titik_survei": 5,
+    "intensitas_aman_maks": 2.7,
+    "koreksi_luas_bbox": 0.785
+  },
+  "matriks": {
+    "K0_S0": { "level": 0, "sumber": "turunan" },
+    "K0_S1": { "level": 1, "sumber": "tabel" },
+    "K1_S1": { "level": 2, "sumber": "turunan" },
+    "K0_S2": { "level": 2, "sumber": "tabel" },
+    "K1_S2": { "level": 3, "sumber": "turunan" },
+    "K0_S3": { "level": 3, "sumber": "turunan" },
+    "K1_S3": { "level": 3, "sumber": "tabel" },
+    "K0_S4": { "level": 4, "sumber": "turunan" },
+    "K1_S4": { "level": 4, "sumber": "tabel" }
+  },
+  "rekomendasi": {
+    "0": {
+      "judul": "Sehat",
+      "tindakan": [
+        "Tidak ada tindakan khusus.",
+        "Lanjutkan pemantauan rutin berkala."
+      ]
+    },
+    "1": {
+      "judul": "Di bawah ambang ekonomi",
+      "tindakan": [
+        "Lakukan monitoring rutin berkala.",
+        "Jaga sanitasi lahan dan pemupukan berimbang.",
+        "Lakukan pengaturan tata kelola air sawah.",
+        "Gunakan agens hayati misalnya (Paenibacillus polymyxa) bila tersedia."
+      ]
+    },
+    "2": {
+      "judul": "Mendekati ambang ekonomi",
+      "tindakan": [
+        "Tingkatkan frekuensi monitoring di lapangan.",
+        "Perbaiki faktor predisposisi (kurangi pupuk N berlebih, kurangi kelembapan mikro).",
+        "Aplikasi agens pengendali hayati secara preventif."
+      ]
+    },
+    "3": {
+      "judul": "Melampaui ambang ekonomi",
+      "tindakan": [
+        "Lakukan tindakan pengendalian segera dengan pestisida hayati dan atau pestisida kimia bila diperlukan.",
+        "Evaluasi efektivitas aplikasi pengendalian setelah perlakuan."
+      ]
+    },
+    "4": {
+      "judul": "Serangan sangat tinggi",
+      "tindakan": [
+        "Prioritaskan tindakan yang paling cepat menekan perkembangan penyakit (terutama fungisida yang terdaftar dan efektif).",
+        "Pertahankan dan integrasikan komponen PHT lainnya.",
+        "Segera konsultasikan dengan Penyuluh Pertanian Lapangan (PPL) setempat."
+      ]
+    }
+  }
+}
