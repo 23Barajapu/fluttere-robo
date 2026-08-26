@@ -254,7 +254,7 @@ class RuleEngineResult {
   final int d; // Titik Nt >= nt_ringan_min
   final String kodeK; // K0 atau K1
   final String kodeS; // S0, S1, S2, S3, S4
-  final String fullCode; // contoh: "K1-S4"
+  final String fullCode; // Format: "K1-S4"
   final int level; // 0, 1, 2, 3, 4
   final String levelTitle;
   final List<String> rekomendasi;

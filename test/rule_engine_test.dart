@@ -3,10 +3,10 @@ import 'package:flutter_robo/models/survey_models.dart';
 import 'package:flutter_robo/services/rule_engine_service.dart';
 
 void main() {
-  group('BIMA 2026 PRD Spesifikasi & Contoh Perhitungan (Bab 5 & Bab 9)', () {
+  group('BIMA 2026 PRD Spesifikasi & Implementasi Perhitungan (Bab 5 & Bab 9)', () {
     final cfg = RuleEngineConfig.defaultFallback;
 
-    test('Contoh Perhitungan Bab 5: Kasus K1-S4 menghasilkan Level 4 Serangan Sangat Tinggi', () {
+    test('Implementasi Perhitungan Bab 5: Kasus K1-S4 menghasilkan Level 4 Serangan Sangat Tinggi', () {
       final points = [
         SurveyPointData(id: 'T1', name: 'Kiri Atas', nb: 18, nt: 12, na: 1),
         SurveyPointData(id: 'T2', name: 'Kanan Atas', nb: 22, nt: 14, na: 0),
