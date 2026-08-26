@@ -109,14 +109,23 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1B4332),
-                shape: BoxShape.circle,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 30,
+                height: 30,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1B4332),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.eco_rounded,
+                      color: Color(0xFF52B788), size: 18),
+                ),
               ),
-              child: const Icon(Icons.eco_rounded,
-                  color: Color(0xFF52B788), size: 20),
             ),
             const SizedBox(width: 10),
             const Column(

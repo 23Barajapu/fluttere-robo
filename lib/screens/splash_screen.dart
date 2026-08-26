@@ -66,22 +66,36 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4332),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF40916C).withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        spreadRadius: 8,
+                        color: const Color(0xFF52B788).withValues(alpha: 0.35),
+                        blurRadius: 32,
+                        spreadRadius: 6,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    size: 64,
-                    color: Color(0xFF52B788),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 110,
+                      height: 110,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1B4332),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.eco_rounded,
+                          size: 64,
+                          color: Color(0xFF52B788),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
