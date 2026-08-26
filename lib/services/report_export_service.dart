@@ -13,8 +13,8 @@ class ReportExportService {
     final buffer = StringBuffer();
 
     buffer.writeln('====================================================');
-    buffer.writeln('LAPORAN RINGKASAN DIAGNOSIS PENYAKIT DAUN PADI');
-    buffer.writeln('Sistem Terintegrasi Deteksi & Rekomendasi Presisi');
+    buffer.writeln('RADAR: LAPORAN DIAGNOSIS PENYAKIT DAUN PADI');
+    buffer.writeln('Rice Anomaly Detection and Assessment Recognition');
     buffer.writeln('====================================================');
     buffer.writeln('ID Petak          : $idPetak');
     buffer.writeln('Waktu Survei      : ${now.toIso8601String().substring(0, 19).replaceAll('T', ' ')}');

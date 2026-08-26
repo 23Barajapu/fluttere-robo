@@ -1,4 +1,4 @@
-# RiceLeaf AI: Sistem Deteksi dan Diagnosis Keparahan Penyakit Daun Padi
+# RADAR: Rice Anomaly Detection and Assessment Recognition
 
 Aplikasi mobile berbasis Flutter dan TensorFlow Lite (On-Device Edge AI) yang dirancang untuk mendeteksi lesi bercak daun padi, mengklasifikasikan jenis penyakit, dan mengevaluasi tingkat keparahan petak sawah menggunakan Pure Rule Engine deterministik sesuai protokol penelitian Hibah BIMA 2026.
 

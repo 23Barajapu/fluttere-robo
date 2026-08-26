@@ -8,16 +8,16 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  runApp(const RiceLeafApp());
+  runApp(const RadarApp());
 }
 
-class RiceLeafApp extends StatelessWidget {
-  const RiceLeafApp({super.key});
+class RadarApp extends StatelessWidget {
+  const RadarApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rice Leaf Disease Detector',
+      title: 'RADAR',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

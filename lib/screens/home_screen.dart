@@ -119,9 +119,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF52B788), size: 20),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'RiceLeaf AI',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'RADAR',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2),
+                ),
+                Text(
+                  'Rice Anomaly Detection and Assessment Recognition',
+                  style: TextStyle(fontSize: 9, color: Color(0xFF95D5B2)),
+                ),
+              ],
             ),
           ],
         ),

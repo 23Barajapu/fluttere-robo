@@ -86,21 +86,31 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'RiceLeaf AI',
+                  'RADAR',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                    letterSpacing: 2.0,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Deteksi Penyakit Padi • Edge AI (Offline)',
+                  'Rice Anomaly Detection and Assessment Recognition',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF95D5B2),
                     letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Deteksi Penyakit Padi • 100% On-Device Edge AI',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white54,
                   ),
                 ),
                 const SizedBox(height: 48),
