@@ -9,6 +9,8 @@ import '../widgets/scanning_overlay.dart';
 import 'survey_result_screen.dart';
 
 class SurveyScreen extends StatefulWidget {
+  static List<SurveyPointData>? activeSessionPoints;
+
   const SurveyScreen({super.key});
 
   @override
@@ -31,14 +33,17 @@ class _SurveyScreenState extends State<SurveyScreen> {
     RuleEngineService.loadConfig().catchError((_) => RuleEngineConfig.defaultFallback);
   }
 
-  void _initSurveyPoints() {
-    _points = [
-      SurveyPointData(id: 'T1', name: 'Sudut Kiri Atas'),
-      SurveyPointData(id: 'T2', name: 'Sudut Kanan Atas'),
-      SurveyPointData(id: 'T3', name: 'Sudut Kiri Bawah'),
-      SurveyPointData(id: 'T4', name: 'Sudut Kanan Bawah'),
-      SurveyPointData(id: 'T5', name: 'Titik Tengah Petak'),
-    ];
+  void _initSurveyPoints({bool forceReset = false}) {
+    if (forceReset || SurveyScreen.activeSessionPoints == null) {
+      SurveyScreen.activeSessionPoints = [
+        SurveyPointData(id: 'T1', name: 'Sudut Kiri Atas'),
+        SurveyPointData(id: 'T2', name: 'Sudut Kanan Atas'),
+        SurveyPointData(id: 'T3', name: 'Sudut Kiri Bawah'),
+        SurveyPointData(id: 'T4', name: 'Sudut Kanan Bawah'),
+        SurveyPointData(id: 'T5', name: 'Titik Tengah Petak'),
+      ];
+    }
+    _points = SurveyScreen.activeSessionPoints!;
   }
 
   int get _completedSlotsCount {
@@ -206,6 +211,223 @@ class _SurveyScreenState extends State<SurveyScreen> {
     );
   }
 
+  void _applySimulationScenario({
+    required String scenarioName,
+    required List<List<int>> pointValues,
+  }) {
+    setState(() {
+      for (int i = 0; i < _points.length && i < pointValues.length; i++) {
+        final pt = _points[i];
+        final vals = pointValues[i];
+        final nb = vals[0];
+        final nt = vals[1];
+        final na = vals[2];
+
+        pt.nb = nb;
+        pt.nt = nt;
+        pt.na = na;
+        pt.isUnreachable = false;
+
+        pt.samples[StrataType.bawah] = LeafPhotoSample(
+          imagePath: '',
+          strata: StrataType.bawah,
+          spotCount: nb,
+          diseaseName: nb > 0 ? 'Bercak Cokelat (Simulasi)' : 'Daun Sehat',
+          confidence: 1.0,
+          boundingBoxes: [],
+        );
+        pt.samples[StrataType.tengah] = LeafPhotoSample(
+          imagePath: '',
+          strata: StrataType.tengah,
+          spotCount: nt,
+          diseaseName: nt > 0 ? 'Bercak Cokelat (Simulasi)' : 'Daun Sehat',
+          confidence: 1.0,
+          boundingBoxes: [],
+        );
+        pt.samples[StrataType.atas] = LeafPhotoSample(
+          imagePath: '',
+          strata: StrataType.atas,
+          spotCount: na,
+          diseaseName: na > 0 ? 'Bercak Cokelat (Simulasi)' : 'Daun Sehat',
+          confidence: 1.0,
+          boundingBoxes: [],
+        );
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Simulasi diterapkan: $scenarioName'),
+        backgroundColor: const Color(0xFF2D6A4F),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showSimulationDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF132A1C),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF52B788).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bolt_rounded,
+                      color: Color(0xFF52B788), size: 20),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Pilih Skenario Simulasi Cepat',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildScenarioTile(
+              title: '🟢 Skenario 1: Sehat Prima (Level 0)',
+              subtitle: 'Nb=0, Nt=0, Na=0 pada semua 5 titik (0 lesi)',
+              color: const Color(0xFF2E7D32),
+              onTap: () {
+                Navigator.pop(ctx);
+                _applySimulationScenario(
+                  scenarioName: 'Sehat Prima (Level 0)',
+                  pointValues: [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildScenarioTile(
+              title: '🟡 Skenario 2: Di Bawah Ambang (Level 1)',
+              subtitle: 'Nb rata-rata 12 bercak, daun tengah & atas aman',
+              color: const Color(0xFF43A047),
+              onTap: () {
+                Navigator.pop(ctx);
+                _applySimulationScenario(
+                  scenarioName: 'Di Bawah Ambang (Level 1)',
+                  pointValues: [
+                    [12, 0, 0],
+                    [14, 0, 0],
+                    [10, 0, 0],
+                    [15, 0, 0],
+                    [11, 0, 0],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildScenarioTile(
+              title: '🟠 Skenario 3: Mendekati Ambang / Waspada (Level 2)',
+              subtitle: 'Nb rata-rata 24 bercak, mulai merambat ke daun tengah',
+              color: const Color(0xFFFB8C00),
+              onTap: () {
+                Navigator.pop(ctx);
+                _applySimulationScenario(
+                  scenarioName: 'Mendekati Ambang (Level 2)',
+                  pointValues: [
+                    [24, 4, 0],
+                    [26, 6, 0],
+                    [20, 2, 0],
+                    [28, 5, 0],
+                    [22, 3, 0],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildScenarioTile(
+              title: '🔴 Skenario 4: Melampaui Ambang / Kritis PHT (Level 3)',
+              subtitle: 'Nb > 30, infeksi berat daun tengah & daun atas',
+              color: const Color(0xFFE53935),
+              onTap: () {
+                Navigator.pop(ctx);
+                _applySimulationScenario(
+                  scenarioName: 'Melampaui Ambang (Level 3)',
+                  pointValues: [
+                    [36, 14, 3],
+                    [38, 16, 4],
+                    [32, 12, 2],
+                    [42, 18, 5],
+                    [35, 13, 3],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScenarioTile({
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B3D2B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.white60, fontSize: 10.5),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.white54, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _runDiagnosis() {
     final result = RuleEngineService.evaluateSurvey(points: _points);
 
@@ -240,12 +462,24 @@ class _SurveyScreenState extends State<SurveyScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Simulasi Cepat (Demo)',
+            icon: const Icon(Icons.bolt_rounded, color: Color(0xFF52B788)),
+            onPressed: _showSimulationDialog,
+          ),
+          IconButton(
             tooltip: 'Reset Survei',
             icon: const Icon(Icons.restart_alt_rounded, color: Colors.white70),
             onPressed: () {
               setState(() {
-                _initSurveyPoints();
+                _initSurveyPoints(forceReset: true);
               });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Survei telah di-reset ke awal.'),
+                  backgroundColor: Color(0xFF2D6A4F),
+                  duration: Duration(seconds: 1),
+                ),
+              );
             },
           ),
         ],

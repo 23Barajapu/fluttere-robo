@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import '../models/survey_models.dart';
 
 class ReportExportService {
@@ -129,5 +130,45 @@ class ReportExportService {
       idPetak: idPetak,
     );
     return const JsonEncoder.withIndent('  ').convert(payload);
+  }
+
+  /// Menyimpan file laporan (.txt atau .json) langsung ke direktori Download HP
+  static Future<File> saveReportToFile({
+    required RuleEngineResult result,
+    required List<SurveyPointData> points,
+    bool isJson = false,
+    String idPetak = 'PETAK-01',
+  }) async {
+    final now = DateTime.now();
+    final timestamp =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+    final extension = isJson ? 'json' : 'txt';
+    final fileName = 'Laporan_Diagnosis_${idPetak}_$timestamp.$extension';
+    final content = isJson
+        ? generateJsonPrettyString(
+            result: result, points: points, idPetak: idPetak)
+        : generateTextSummary(
+            result: result, points: points, idPetak: idPetak);
+
+    // Opsi path direktori Download di Android
+    final potentialDirs = [
+      Directory('/storage/emulated/0/Download'),
+      Directory('/sdcard/Download'),
+      Directory.systemTemp,
+    ];
+
+    Directory targetDir = potentialDirs.last;
+    for (final dir in potentialDirs) {
+      try {
+        if (dir.existsSync()) {
+          targetDir = dir;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    final file = File('${targetDir.path}/$fileName');
+    await file.writeAsString(content);
+    return file;
   }
 }

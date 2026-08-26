@@ -29,6 +29,190 @@ class SurveyResultScreen extends StatelessWidget {
     }
   }
 
+  void _showDownloadDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF132A1C),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.download_rounded,
+                    color: Color(0xFF52B788), size: 22),
+                SizedBox(width: 10),
+                Text(
+                  'Unduh File Laporan Diagnosis',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildExportOptionTile(
+              icon: Icons.description_rounded,
+              title: 'Laporan Teks Lengkap (.txt)',
+              subtitle: 'Format formal laporan PHT & rekomendasi agronomi',
+              onTap: () {
+                Navigator.pop(ctx);
+                _downloadFile(context, isJson: false);
+              },
+            ),
+            const SizedBox(height: 10),
+            _buildExportOptionTile(
+              icon: Icons.data_object_rounded,
+              title: 'Dataset Terstruktur (.json)',
+              subtitle: 'Data JSON untuk integrasi sistem / arsip riset',
+              onTap: () {
+                Navigator.pop(ctx);
+                _downloadFile(context, isJson: true);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExportOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B3D2B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF2D6A4F)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF52B788).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: const Color(0xFF52B788), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style:
+                        const TextStyle(color: Colors.white60, fontSize: 10.5),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.download_rounded,
+                color: Color(0xFF52B788), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadFile(BuildContext context, {required bool isJson}) async {
+    try {
+      final file = await ReportExportService.saveReportToFile(
+        result: result,
+        points: points,
+        isJson: isJson,
+      );
+
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1B3D2B),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_outline_rounded,
+                  color: Color(0xFF52B788), size: 24),
+              SizedBox(width: 8),
+              Text(
+                'File Berhasil Diunduh!',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Laporan berhasil disimpan ke penyimpanan HP:',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF132A1C),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF2D6A4F)),
+                ),
+                child: SelectableText(
+                  file.path,
+                  style: const TextStyle(
+                    color: Color(0xFFD8F3DC),
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child:
+                  const Text('Tutup', style: TextStyle(color: Colors.white70)),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyimpan file: $e'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final levelColor = _getLevelColor(result.level);
@@ -438,51 +622,66 @@ class SurveyResultScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Action Buttons
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      final summaryText = ReportExportService.generateTextSummary(
-                        result: result,
-                        points: points,
-                      );
-                      Clipboard.setData(ClipboardData(text: summaryText));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Ringkasan laporan berhasil disalin ke clipboard!'),
-                          backgroundColor: Color(0xFF2D6A4F),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showDownloadDialog(context),
+                        icon: const Icon(Icons.download_rounded, size: 18),
+                        label: const Text('Download Hasil'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF52B788),
+                          foregroundColor: const Color(0xFF0D1B13),
+                          minimumSize: const Size(0, 52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.copy_rounded, size: 18),
-                    label: const Text('Salin Ringkasan'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF95D5B2),
-                      side: const BorderSide(color: Color(0xFF52B788)),
-                      minimumSize: const Size(0, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final summaryText = ReportExportService.generateTextSummary(
+                            result: result,
+                            points: points,
+                          );
+                          Clipboard.setData(ClipboardData(text: summaryText));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Ringkasan laporan berhasil disalin ke clipboard!'),
+                              backgroundColor: Color(0xFF2D6A4F),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: const Text('Salin Teks'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF95D5B2),
+                          side: const BorderSide(color: Color(0xFF52B788)),
+                          minimumSize: const Size(0, 52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text(
-                      'Selesai',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D6A4F),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text('Kembali ke Survei'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: const BorderSide(color: Colors.white24),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),

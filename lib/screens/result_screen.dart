@@ -28,18 +28,6 @@ class ResultScreen extends StatelessWidget {
           'Hasil Analisis Daun',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fitur export/share segera hadir.'),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
