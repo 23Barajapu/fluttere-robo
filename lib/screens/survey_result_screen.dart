@@ -278,6 +278,41 @@ class SurveyResultScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
+            // Jejak Perhitungan 5 Langkah (Sesuai PRD)
+            const Text(
+              'Jejak Perhitungan Sistem (5 Langkah BIMA 2026)',
+              style: TextStyle(
+                color: Color(0xFFB7E4C7),
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF132A1C),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF2D6A4F).withValues(alpha: 0.5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStepLog('Langkah 1 (4 Angka Dasar)', result.langkah1Log),
+                  const Divider(color: Colors.white10, height: 16),
+                  _buildStepLog('Langkah 2 (Kode Kepadatan K)', result.langkah2Log),
+                  const Divider(color: Colors.white10, height: 16),
+                  _buildStepLog('Langkah 3 (Kode Sebaran S)', result.langkah3Log),
+                  const Divider(color: Colors.white10, height: 16),
+                  _buildStepLog('Langkah 4 (Matriks K × S)', result.langkah4Log),
+                  const Divider(color: Colors.white10, height: 16),
+                  _buildStepLog('Langkah 5 (Koreksi & Hotspot)', result.langkah5Log),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // Rekomendasi PHT
             const Text(
               'Rekomendasi Tindakan Pengendalian (PHT)',
@@ -487,6 +522,31 @@ class SurveyResultScreen extends StatelessWidget {
               ),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildStepLog(String stepTitle, String logText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          stepTitle,
+          style: const TextStyle(
+            color: Color(0xFF52B788),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          logText,
+          style: const TextStyle(
+            color: Color(0xFFD8F3DC),
+            fontSize: 12,
+            height: 1.4,
+          ),
+        ),
       ],
     );
   }

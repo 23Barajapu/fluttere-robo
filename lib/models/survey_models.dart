@@ -264,6 +264,12 @@ class RuleEngineResult {
   final double? intensitas;
   final bool intensitasTerkoreksi;
 
+  final String langkah1Log;
+  final String langkah2Log;
+  final String langkah3Log;
+  final String langkah4Log;
+  final String langkah5Log;
+
   RuleEngineResult({
     required this.a,
     required this.b,
@@ -278,6 +284,11 @@ class RuleEngineResult {
     required this.sumberSel,
     required this.peringatanHotspot,
     required this.hotspotTitikList,
+    required this.langkah1Log,
+    required this.langkah2Log,
+    required this.langkah3Log,
+    required this.langkah4Log,
+    required this.langkah5Log,
     this.intensitas,
     this.intensitasTerkoreksi = false,
   });

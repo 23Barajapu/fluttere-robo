@@ -27,7 +27,8 @@ class RuleEngineService {
     double? intensitas,
     RuleEngineConfig? customConfig,
   }) {
-    final cfg = customConfig ?? _cachedConfig ?? RuleEngineConfig.defaultFallback;
+    final cfg =
+        customConfig ?? _cachedConfig ?? RuleEngineConfig.defaultFallback;
 
     final validPoints = points.where((p) => !p.isUnreachable).toList();
     if (validPoints.isEmpty) {
@@ -45,6 +46,11 @@ class RuleEngineService {
         sumberSel: 'turunan',
         peringatanHotspot: false,
         hotspotTitikList: [],
+        langkah1Log: 'Data titik kosong / tidak terjangkau',
+        langkah2Log: 'A = 0.0 < 20 -> K0 (Rendah)',
+        langkah3Log: 'Bebas bercak -> S0',
+        langkah4Log: 'K0 + S0 -> Level 0',
+        langkah5Log: 'Tidak ada koreksi.',
       );
     }
 
@@ -52,43 +58,70 @@ class RuleEngineService {
     final totalNb = validPoints.fold<int>(0, (sum, p) => sum + p.nb);
     final double a = totalNb / validPoints.length; // Tanpa pembulatan awal
 
-    final int b = validPoints.where((p) => p.na >= cfg.naMin).length;
-    final int c = validPoints.where((p) => p.nt > cfg.ntBerat).length;
-    final int d = validPoints.where((p) => p.nt >= cfg.ntRinganMin).length;
-    final bool adaBercak =
-        validPoints.any((p) => (p.nb + p.nt + p.na) > 0);
+    final bList = validPoints.where((p) => p.na >= cfg.naMin).map((p) => p.id).toList();
+    final cList = validPoints.where((p) => p.nt > cfg.ntBerat).map((p) => p.id).toList();
+    final dList = validPoints.where((p) => p.nt >= cfg.ntRinganMin).map((p) => p.id).toList();
+
+    final int b = bList.length;
+    final int c = cList.length;
+    final int d = dList.length;
+    final bool adaBercak = validPoints.any((p) => (p.nb + p.nt + p.na) > 0);
+
+    final nbParts = validPoints.map((p) => p.nb.toString()).join(' + ');
+    final String l1Log =
+        'A = ($nbParts) / ${validPoints.length} = ${a.toStringAsFixed(1)} | '
+        'B = $b ${bList.isNotEmpty ? '(${bList.join(', ')})' : ''} | '
+        'C = $c ${cList.isNotEmpty ? '(${cList.join(', ')})' : ''} | '
+        'D = $d ${dList.isNotEmpty ? '(${dList.join(', ')})' : ''}';
 
     // ---------- LANGKAH 2: Tentukan Kode Kepadatan (K) ----------
-    final String kodeK = (a >= cfg.nbPadat) ? 'K1' : 'K0';
+    final bool isPadat = a >= cfg.nbPadat;
+    final String kodeK = isPadat ? 'K1' : 'K0';
+    final String l2Log =
+        'A = ${a.toStringAsFixed(1)} ${isPadat ? '>= 20 -> K1 (Padat)' : '< 20 -> K0 (Rendah)'}';
 
     // ---------- LANGKAH 3: Tentukan Kode Sebaran (S) ----------
     final int m = cfg.titikMinimum;
     String kodeS;
+    String l3Reason;
     if (b >= m) {
       kodeS = 'S4';
+      l3Reason = 'Urutan 1: B = $b >= $m -> S4 (Sampai daun atas)';
     } else if (c >= m) {
       kodeS = 'S3';
+      l3Reason = 'Urutan 2: C = $c >= $m -> S3 (Daun tengah berat > 10)';
     } else if (d >= m) {
       kodeS = 'S2';
+      l3Reason = 'Urutan 3: D = $d >= $m -> S2 (Daun tengah ringan >= 1)';
     } else if (adaBercak) {
       kodeS = 'S1';
+      l3Reason = 'Urutan 4: Masih ditemukan bercak -> S1 (Hanya daun bawah)';
     } else {
       kodeS = 'S0';
+      l3Reason = 'Urutan 5: Bebas bercak -> S0 (Sehat)';
     }
 
     // ---------- LANGKAH 4: Pencocokan Matriks Level Dasar ----------
     final String matrixKey = '${kodeK}_$kodeS';
-    final MatrixCell cell = cfg.matriks[matrixKey] ??
-        MatrixCell(level: 0, sumber: 'turunan');
+    final MatrixCell cell =
+        cfg.matriks[matrixKey] ?? MatrixCell(level: 0, sumber: 'turunan');
     int finalLevel = cell.level;
+    final String l4Log =
+        'Pasangan $kodeK + $kodeS -> Level $finalLevel (${cell.sumber == 'tabel' ? 'Tabel Ahli' : 'Sel Turunan'})';
 
     // ---------- LANGKAH 5a: Koreksi Intensitas ----------
     bool intensitasTerkoreksi = false;
-    if (finalLevel == 1 &&
-        intensitas != null &&
-        intensitas >= cfg.intensitasAmanMaks) {
-      finalLevel = 2;
-      intensitasTerkoreksi = true;
+    String l5aLog = 'Koreksi intensitas: Lewat';
+    if (finalLevel == 1) {
+      if (intensitas != null && intensitas >= cfg.intensitasAmanMaks) {
+        finalLevel = 2;
+        intensitasTerkoreksi = true;
+        l5aLog =
+            'Koreksi intensitas: Intensitas ${intensitas.toStringAsFixed(1)}% >= 2.7% -> Naik ke Level 2';
+      } else {
+        l5aLog =
+            'Koreksi intensitas: Aman (${intensitas != null ? '${intensitas.toStringAsFixed(1)}%' : 'N/A'})';
+      }
     }
 
     // ---------- LANGKAH 5b: Peringatan Titik Parah (Hotspot) ----------
@@ -100,8 +133,12 @@ class RuleEngineService {
       }
     }
 
-    final bool peringatanHotspot =
-        (hotspotList.isNotEmpty && finalLevel <= 2);
+    final bool peringatanHotspot = (hotspotList.isNotEmpty && finalLevel <= 2);
+    final String l5bLog = peringatanHotspot
+        ? 'Hotspot: Terdeteksi titik ekstrem Level >= 3 (${hotspotList.join(', ')}) saat petak Level $finalLevel'
+        : 'Hotspot: Tidak ada titik ekstrem yang melebihi petak';
+
+    final String l5Log = '$l5aLog | $l5bLog';
 
     final recoItem = cfg.rekomendasi[finalLevel];
     final String levelTitle = recoItem?.judul ?? 'Level $finalLevel';
@@ -121,6 +158,11 @@ class RuleEngineService {
       sumberSel: cell.sumber,
       peringatanHotspot: peringatanHotspot,
       hotspotTitikList: hotspotList,
+      langkah1Log: l1Log,
+      langkah2Log: l2Log,
+      langkah3Log: l3Reason,
+      langkah4Log: l4Log,
+      langkah5Log: l5Log,
       intensitas: intensitas,
       intensitasTerkoreksi: intensitasTerkoreksi,
     );
@@ -164,6 +206,11 @@ class RuleEngineService {
       sumberSel: cell.sumber,
       peringatanHotspot: false,
       hotspotTitikList: [],
+      langkah1Log: '',
+      langkah2Log: '',
+      langkah3Log: '',
+      langkah4Log: '',
+      langkah5Log: '',
     );
   }
 
