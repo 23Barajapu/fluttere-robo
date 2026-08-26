@@ -13,15 +13,15 @@ class ReportExportService {
     final buffer = StringBuffer();
 
     buffer.writeln('====================================================');
-    buffer.writeln('🌾 LAPORAN RINGKASAN DIAGNOSIS PENYAKIT DAUN PADI');
-    buffer.writeln('   Sistem Terintegrasi Deteksi & Rekomendasi Presisi');
+    buffer.writeln('LAPORAN RINGKASAN DIAGNOSIS PENYAKIT DAUN PADI');
+    buffer.writeln('Sistem Terintegrasi Deteksi & Rekomendasi Presisi');
     buffer.writeln('====================================================');
     buffer.writeln('ID Petak          : $idPetak');
     buffer.writeln('Waktu Survei      : ${now.toIso8601String().substring(0, 19).replaceAll('T', ' ')}');
-    buffer.writeln('Metode Sampling   : Pola Diagonal X (5 Titik × 3 Strata)');
+    buffer.writeln('Metode Sampling   : Pola Diagonal X (5 Titik x 3 Strata)');
     buffer.writeln('Versi Ambang      : 1.0 (BIMA 2026)');
     buffer.writeln('----------------------------------------------------');
-    buffer.writeln('📊 KEPUTUSAN DIAGNOSIS AKHIR:');
+    buffer.writeln('KEPUTUSAN DIAGNOSIS AKHIR:');
     buffer.writeln('----------------------------------------------------');
     buffer.writeln('Tingkat Keparahan : LEVEL ${result.level} (${result.levelTitle})');
     buffer.writeln('Pasangan Kode     : ${result.fullCode} (Kepadatan: ${result.kodeK}, Sebaran: ${result.kodeS})');
@@ -31,14 +31,14 @@ class ReportExportService {
       buffer.writeln('Koreksi Luas      : Ya (Intensitas >= 2.7% -> Naik ke Level 2)');
     }
     buffer.writeln('----------------------------------------------------');
-    buffer.writeln('📈 RINCIAN 4 PARAMETER DASAR:');
+    buffer.writeln('RINCIAN 4 PARAMETER DASAR:');
     buffer.writeln('----------------------------------------------------');
     buffer.writeln('A (Rata-rata Nb)  : ${result.a.toStringAsFixed(2)} bercak / titik');
     buffer.writeln('B (Daun Atas Na)  : ${result.b} dari 5 titik terinfeksi (>= 1 bercak)');
     buffer.writeln('C (Tengah Berat)  : ${result.c} dari 5 titik infeksi berat (> 10 bercak)');
     buffer.writeln('D (Tengah Ringan) : ${result.d} dari 5 titik terinfeksi (>= 1 bercak)');
     buffer.writeln('----------------------------------------------------');
-    buffer.writeln('📍 REKAP DATA 5 TITIK RUMPUN:');
+    buffer.writeln('REKAP DATA 5 TITIK RUMPUN:');
     buffer.writeln('----------------------------------------------------');
     for (final pt in points) {
       if (pt.isUnreachable) {
@@ -48,14 +48,14 @@ class ReportExportService {
       }
     }
     buffer.writeln('----------------------------------------------------');
-    buffer.writeln('💡 REKOMENDASI TINDAKAN (PHT):');
+    buffer.writeln('REKOMENDASI TINDAKAN (PHT):');
     buffer.writeln('----------------------------------------------------');
     for (int i = 0; i < result.rekomendasi.length; i++) {
       buffer.writeln('${i + 1}. ${result.rekomendasi[i]}');
     }
     if (catatanPengamat != null && catatanPengamat.isNotEmpty) {
       buffer.writeln('----------------------------------------------------');
-      buffer.writeln('📝 CATATAN PENGAMAT:');
+      buffer.writeln('CATATAN PENGAMAT:');
       buffer.writeln(catatanPengamat);
     }
     buffer.writeln('====================================================');

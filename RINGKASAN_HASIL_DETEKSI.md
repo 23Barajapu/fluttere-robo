@@ -1,6 +1,6 @@
-# 📑 Ringkasan Hasil Deteksi dan Diagnosis Penyakit Daun Padi
+# Ringkasan Hasil Deteksi dan Diagnosis Penyakit Daun Padi
 
-Dokumen ini memuat spesifikasi struktur data laporan, format ekspor ringkasan, dan visualisasi hasil evaluasi lapangan berbasis **Sistem Deteksi, Diagnosis, dan Rekomendasi Presisi (Hibah BIMA 2026)**.
+Dokumen ini memuat spesifikasi struktur data laporan, format ekspor ringkasan, dan visualisasi hasil evaluasi lapangan berbasis Sistem Deteksi, Diagnosis, dan Rekomendasi Presisi (Hibah BIMA 2026).
 
 ---
 
@@ -8,29 +8,29 @@ Dokumen ini memuat spesifikasi struktur data laporan, format ekspor ringkasan, d
 
 ```text
 ====================================================
-🌾 LAPORAN RINGKASAN DIAGNOSIS PENYAKIT DAUN PADI
-   Sistem Terintegrasi Deteksi & Rekomendasi Presisi
+LAPORAN RINGKASAN DIAGNOSIS PENYAKIT DAUN PADI
+Sistem Terintegrasi Deteksi & Rekomendasi Presisi
 ====================================================
 ID Petak          : PETAK-01
 Waktu Survei      : 2026-08-26 16:15:00
-Metode Sampling   : Pola Diagonal X (5 Titik × 3 Strata)
+Metode Sampling   : Pola Diagonal X (5 Titik x 3 Strata)
 Versi Ambang      : 1.0 (BIMA 2026)
 ----------------------------------------------------
-📊 KEPUTUSAN DIAGNOSIS AKHIR:
+KEPUTUSAN DIAGNOSIS AKHIR:
 ----------------------------------------------------
 Tingkat Keparahan : LEVEL 4 (Serangan sangat tinggi)
 Pasangan Kode     : K1-S4 (Kepadatan: K1, Sebaran: S4)
 Sumber Matriks    : Tabel Acuan Ahli Pertanian
 Peringatan Hotspot: TIDAK
 ----------------------------------------------------
-📈 RINCIAN 4 PARAMETER DASAR:
+RINCIAN 4 PARAMETER DASAR:
 ----------------------------------------------------
 A (Rata-rata Nb)  : 20.00 bercak / titik
 B (Daun Atas Na)  : 2 dari 5 titik terinfeksi (>= 1 bercak)
 C (Tengah Berat)  : 5 dari 5 titik infeksi berat (> 10 bercak)
 D (Tengah Ringan) : 5 dari 5 titik terinfeksi (>= 1 bercak)
 ----------------------------------------------------
-📍 REKAP DATA 5 TITIK RUMPUN:
+REKAP DATA 5 TITIK RUMPUN:
 ----------------------------------------------------
 T1 - Sudut Kiri Atas     : Nb=18, Nt=12, Na= 1 | Total=31 bercak
 T2 - Sudut Kanan Atas    : Nb=22, Nt=14, Na= 0 | Total=36 bercak
@@ -38,7 +38,7 @@ T3 - Sudut Kiri Bawah    : Nb=19, Nt=11, Na= 1 | Total=31 bercak
 T4 - Sudut Kanan Bawah   : Nb=21, Nt=13, Na= 0 | Total=34 bercak
 T5 - Titik Tengah Petak  : Nb=20, Nt=12, Na= 0 | Total=32 bercak
 ----------------------------------------------------
-💡 REKOMENDASI TINDAKAN (PHT):
+REKOMENDASI TINDAKAN (PHT):
 ----------------------------------------------------
 1. Prioritaskan tindakan yang paling cepat menekan perkembangan penyakit (terutama fungisida yang terdaftar dan efektif).
 2. Pertahankan dan integrasikan komponen PHT lainnya.
