@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/survey_models.dart';
+import '../services/report_export_service.dart';
 
 class SurveyResultScreen extends StatelessWidget {
   final RuleEngineResult result;
@@ -435,22 +437,56 @@ class SurveyResultScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // Action Button
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
-                'Selesai / Survei Petak Baru',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2D6A4F),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final summaryText = ReportExportService.generateTextSummary(
+                        result: result,
+                        points: points,
+                      );
+                      Clipboard.setData(ClipboardData(text: summaryText));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Ringkasan laporan berhasil disalin ke clipboard!'),
+                          backgroundColor: Color(0xFF2D6A4F),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 18),
+                    label: const Text('Salin Ringkasan'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF95D5B2),
+                      side: const BorderSide(color: Color(0xFF52B788)),
+                      minimumSize: const Size(0, 52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text(
+                      'Selesai',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D6A4F),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
           ],
